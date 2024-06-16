@@ -1,0 +1,4 @@
+
+
+class DatabaseCleaning:
+    pass
