@@ -3,7 +3,7 @@ from sqlalchemy import create_engine, inspect
 
 
 
-ENGINE_ADDRESS = "{RDS_DATABASE}://{RDS_USER}:{RDS_PASSWORD}@{RDS_HOST}:{RDS_PORT}/postgres"
+ENGINE_ADDRESS = "{DATABASE_TYPE}+{DBAPI}://{USER}:{PASSWORD}@{HOST}:{PORT}/{DATABASE}"
 
 class DatabaseConnector:
 
@@ -37,8 +37,6 @@ class DatabaseConnector:
     
     
 if __name__ == '__main__':
-    db_conn = DatabaseConnector()
-    creds_dict = db_conn.read_db_creds('db_creds.yaml')
-    engine = db_conn.init_db_engine(creds_dict)
-    print(db_conn.list_tables(engine))
+    db_conn = DatabaseConnector('sales_data_db_creds.yaml')
+    print(db_conn.list_tables(db_conn.engine))
     

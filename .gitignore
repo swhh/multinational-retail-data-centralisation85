@@ -1,0 +1,4 @@
+db_creds.yaml
+*.ipynb
+sales_data_db_creds.yaml
+__pycache__/
