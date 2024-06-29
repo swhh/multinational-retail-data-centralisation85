@@ -40,8 +40,8 @@ class DataExtractor:
         saving them in a pandas DataFrame"""
         store_num = self.list_number_of_stores(STORE_NUM_URL, header_dict=header_dict)
         stores = []
-        for i in range(store_num):
-            response = requests.get(end_point.format(store_number=i), headers=header_dict)
+        for store_number in range(store_num):
+            response = requests.get(end_point.format(store_number=store_number), headers=header_dict)
             store_details = response.json()
             stores.append(store_details)
         return pd.DataFrame(stores)

@@ -9,33 +9,33 @@ CARD_PROVIDERS = ['Diners Club / Carte Blanche', 'American Express', 'JCB 16 dig
        'VISA 19 digit', 'VISA 16 digit', 'VISA 13 digit']
 
 def weight_conversion(weight_str):
-    """Convert weight string to a float of the kg weight"""
+    """Convert weight string to a weight float in kgs"""
     if type(weight_str) == float:
         return weight_str
     if weight_str.endswith('ml'):
         weight = float(weight_str[:-2])
-        return weight / 1000
+        return round(weight / 1000, 2)
     elif weight_str.endswith('kg'):
         if 'x' in weight_str:
             nums = weight_str[:-2].split('x')
             if len(nums) == 2 and all(num.isnumeric() for num in nums):
-                return float(nums[0]) * float(nums[1])
+                return round(float(nums[0]) * float(nums[1]), 2)
             else:
                 return np.nan           
         weight = float(weight_str[:-2])
-        return weight
+        return round(weight, 2)
     elif weight_str.endswith('g'):
         if 'x' in weight_str:
             nums = weight_str[:-1].split('x')
             if len(nums) == 2 and all(i.isnumeric() for i in nums):
-                return (float(nums[0]) * float(nums[1])) / 1000
+                return round((float(nums[0]) * float(nums[1])) / 1000, 2)
             else:
                 return np.nan  
         weight = float(weight_str[:-1])
-        return weight / 1000
+        return round(weight / 1000, 2)
     elif weight_str.endswith('oz'):
         weight = float(weight_str[:-2])
-        return weight / 35.274
+        return round(weight / 35.274, 2)
     else:
         return np.nan
 
@@ -47,12 +47,10 @@ class DataCleaning:
         clean_df = self._datetime_conversion(clean_df)
 
         country_codes = clean_df['country_code'].replace('GGB', 'GB')
-        country_codes = country_codes.apply(lambda x: x if x in ['GB', 'US', 'DE'] else pd.NA)
-        clean_df['country_code'] = country_codes
+        clean_df['country_code'] = country_codes.apply(lambda x: x if x in ['GB', 'US', 'DE'] else pd.NA)
 
         country = clean_df['country']
-        country = country.apply(lambda x: x if x in ['Germany', 'United Kingdom', 'United States'] else pd.NA)
-        clean_df['country'] = country
+        clean_df['country'] = country.apply(lambda x: x if x in ['Germany', 'United Kingdom', 'United States'] else pd.NA)
         
         clean_df['phone_number'] = self._clean_phone_numbers(clean_df['phone_number'])
         clean_df['address'] = self._clean_addresses(clean_df['address'])
@@ -83,10 +81,10 @@ class DataCleaning:
          clean_df['address'] = self._clean_addresses(clean_df['address'])
          clean_df['opening_date'] = pd.to_datetime(clean_df['opening_date'], format='mixed', errors='coerce')
          clean_df['locality'] = self._replace_bad_strings(clean_df['locality'])
-         clean_df['country_code'] = self._replace_bad_strings(clean_df['locality'])
-         clean_df['continent'] = self._replace_bad_strings(clean_df['locality'])
+         clean_df['country_code'] = self._replace_bad_strings(clean_df['country_code'])
+         clean_df['continent'] = self._replace_bad_strings(clean_df['continent'])
          clean_df['continent'] = clean_df['continent'].str.replace('ee', '')
-         clean_df['staff_numbers'] = pd.to_numeric(clean_df['staff_numbers'], errors='coerce',downcast='integer')
+         clean_df['staff_numbers'] = pd.to_numeric(clean_df['staff_numbers'], errors='coerce', downcast='integer')
          return clean_df
     
 
@@ -102,7 +100,8 @@ class DataCleaning:
         clean_df['date_added'] = pd.to_datetime(clean_df['date_added'], format='mixed', errors='coerce')
         clean_df['category'] = self._replace_bad_strings(clean_df['category'])
         clean_df['removed'] = self._replace_bad_strings(clean_df['removed'])
-        clean_df['product_price'] = pd.to_numeric(clean_df['product_price'].replace('£', ''), errors='coerce')
+        clean_df['product_price'] = pd.to_numeric(clean_df['product_price'].str.replace('£', ''), errors='coerce')
+        clean_df['weight'] = clean_df['weight'].apply(weight_conversion)
         return clean_df
     
     def clean_orders_data(self, df):
@@ -114,8 +113,8 @@ class DataCleaning:
     def clean_date_events(self, df):
         """clean the date_events table, removing NULL and erroneous values"""
         clean_df = self._generic_clean(df)
-        for header in clean_df.columns.values.tolist():
-            clean_df[header] = self._replace_bad_strings(clean_df[header])
+        for column_name in clean_df.columns:
+            clean_df[column_name] = self._replace_bad_strings(clean_df[column_name])
         years = df.year.astype(str)
         clean_df.year = years.apply(lambda x: x if x.isnumeric() else np.nan)
         return clean_df
@@ -125,16 +124,19 @@ class DataCleaning:
         return phone_df.replace({r'\+4\d': '0',  r'\(': '', r'\)': '', r'-': '', r' ': ''}, regex=True)
     
     def _clean_addresses(self, addresses):
+        '''Take Pandas series addresses and return standardised address strings as series'''
         addresses = addresses.str.replace('\n', ',', regex=False)
         return addresses.str.upper()
 
     def _clean_card_numbers(self, card_numbers):
+        """Filter out invalid card number strings from pandas series card_numbers"""
         clean_card_numbers = card_numbers.astype(str)
         return clean_card_numbers.apply(lambda x: x if len(x) > 5 and x.isdigit() else np.nan)
     
     def _replace_bad_strings(self, df):
-        new_df = new_df.astype(str)
-        new_df = df.replace({'N/A': np.nan, 'NULL': np.nan, '^(?=.*[A-Z])(?=.*[0-9])[A-Z0-9]*$': np.nan}, regex=True)
+        """Find junk string values in Pandas series df and replace with nan"""
+        new_df = df.astype(str)
+        new_df = new_df.replace({'N/A': np.nan, 'NULL': np.nan, '^(?=.*[A-Z])(?=.*[0-9])[A-Z0-9]*$': np.nan}, regex=True)
         return new_df
     
     def _datetime_conversion(self, df, format='mixed'):
@@ -155,6 +157,7 @@ class DataCleaning:
         clean_df = clean_df.dropna(axis=1, thresh=threshold)
         clean_df.drop(columns=['index'], inplace=True, errors='ignore')
         clean_df.drop(columns=['unnamed'], inplace=True, errors='ignore')
+        clean_df.drop(columns=['Unnamed: 0'], inplace=True, errors='ignore')
         clean_df.drop(columns=['level_0'], inplace=True, errors='ignore')
         return clean_df
     
