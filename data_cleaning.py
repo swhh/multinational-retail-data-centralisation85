@@ -3,7 +3,6 @@ import pandas as pd
 import math
 import numpy as np
 
-EXPIRY_DATE_FORMAT = '%m/%y'
 CARD_PROVIDERS = ['Diners Club / Carte Blanche', 'American Express', 'JCB 16 digit',
        'JCB 15 digit', 'Maestro', 'Mastercard', 'Discover',
        'VISA 19 digit', 'VISA 16 digit', 'VISA 13 digit']
@@ -44,13 +43,14 @@ class DataCleaning:
     def clean_user_data(self, df):
         """Clean user data, removing duplicates, erroneous entries, clean up addresses/phone numbers"""
         clean_df = self._generic_clean(df)
-        clean_df = self._datetime_conversion(clean_df)
+        clean_df = self._datetime_conversion(clean_df) # convert datetime strings to datetime objects
+
+        clean_df['user_uuid'] = self._replace_bad_strings(clean_df['user_uuid'])
+        clean_df.dropna(subset=['user_uuid'], inplace=True) # remove all rows with no user_uuid
 
         country_codes = clean_df['country_code'].replace('GGB', 'GB')
-        clean_df['country_code'] = country_codes.apply(lambda x: x if x in ['GB', 'US', 'DE'] else pd.NA)
-
-        country = clean_df['country']
-        clean_df['country'] = country.apply(lambda x: x if x in ['Germany', 'United Kingdom', 'United States'] else pd.NA)
+        clean_df['country_code'] = country_codes.apply(lambda x: x if x in ['GB', 'US', 'DE'] else np.nan)
+        clean_df['country'] = clean_df['country'].apply(lambda x: x if x in ['Germany', 'United Kingdom', 'United States'] else pd.NA)
         
         clean_df['phone_number'] = self._clean_phone_numbers(clean_df['phone_number'])
         clean_df['address'] = self._clean_addresses(clean_df['address'])
@@ -63,14 +63,14 @@ class DataCleaning:
         NULL values or errors with formatting"""
         # drop duplicates/remove null values
         clean_df = self._generic_clean(df)
-        clean_df = clean_df.dropna(subset=['card_number'])
         # clean dates
-        clean_df['expiry_date'] = pd.to_datetime(clean_df['expiry_date'], format=EXPIRY_DATE_FORMAT, errors='coerce')
+        clean_df['expiry_date'] = self._replace_bad_strings(clean_df['expiry_date'])
         clean_df['date_payment_confirmed'] = pd.to_datetime(clean_df['date_payment_confirmed'], format='mixed', errors='coerce')
         #clean card_providers
         clean_df['card_provider'] = clean_df['card_provider'].apply(lambda x: x if x in CARD_PROVIDERS else np.nan)
         # clean card numbers     
         clean_df.card_number = self._clean_card_numbers(clean_df.card_number)
+        clean_df = clean_df.dropna(subset=['card_number'])
         return clean_df
     
 
@@ -79,12 +79,12 @@ class DataCleaning:
         NULL values or errors with formatting"""
          clean_df = self._generic_clean(df)
          clean_df['address'] = self._clean_addresses(clean_df['address'])
+         for column_name in clean_df.columns:
+            clean_df[column_name] = self._replace_bad_strings(clean_df[column_name])
          clean_df['opening_date'] = pd.to_datetime(clean_df['opening_date'], format='mixed', errors='coerce')
-         clean_df['locality'] = self._replace_bad_strings(clean_df['locality'])
-         clean_df['country_code'] = self._replace_bad_strings(clean_df['country_code'])
-         clean_df['continent'] = self._replace_bad_strings(clean_df['continent'])
          clean_df['continent'] = clean_df['continent'].str.replace('ee', '')
          clean_df['staff_numbers'] = pd.to_numeric(clean_df['staff_numbers'], errors='coerce', downcast='integer')
+         clean_df.dropna(subset=['store_code'], inplace=True) # drop nulls from primary key col
          return clean_df
     
 
@@ -97,9 +97,14 @@ class DataCleaning:
     def clean_products_data(self, df):
         """clean the DataFrame of any additional erroneous values"""
         clean_df = self._generic_clean(df)
-        clean_df['date_added'] = pd.to_datetime(clean_df['date_added'], format='mixed', errors='coerce')
+        clean_df['product_name'] = self._replace_bad_strings(clean_df['product_name'])
+        clean_df['uuid'] = self._replace_bad_strings(clean_df['uuid'])
+        clean_df.dropna(subset=['product_code', 'uuid', 'product_name'], inplace=True)
+
         clean_df['category'] = self._replace_bad_strings(clean_df['category'])
-        clean_df['removed'] = self._replace_bad_strings(clean_df['removed'])
+        clean_df['removed'] = self._replace_bad_strings(clean_df['removed'])    
+        clean_df['date_added'] = pd.to_datetime(clean_df['date_added'], format='mixed', errors='coerce')
+
         clean_df['product_price'] = pd.to_numeric(clean_df['product_price'].str.replace('£', ''), errors='coerce')
         clean_df['weight'] = clean_df['weight'].apply(weight_conversion)
         return clean_df
@@ -113,10 +118,14 @@ class DataCleaning:
     def clean_date_events(self, df):
         """clean the date_events table, removing NULL and erroneous values"""
         clean_df = self._generic_clean(df)
+        clean_df['date_uuid'] = self._filter_uuids(clean_df['date_uuid']) # map to nan any non-uuids
+        clean_df.dropna(subset=['date_uuid'], inplace=True) # remove records with date_uuids
         for column_name in clean_df.columns:
             clean_df[column_name] = self._replace_bad_strings(clean_df[column_name])
-        years = df.year.astype(str)
-        clean_df.year = years.apply(lambda x: x if x.isnumeric() else np.nan)
+        clean_df.year = clean_df.year.astype(str).apply(lambda x: x if x.isnumeric() else np.nan)
+        clean_df.month = clean_df.month.astype(str).apply(lambda x: x if x.isnumeric() else np.nan)
+        clean_df.day = clean_df.day.astype(str).apply(lambda x: x if x.isnumeric() else np.nan)
+        
         return clean_df
        
 
@@ -136,6 +145,7 @@ class DataCleaning:
     def _replace_bad_strings(self, df):
         """Find junk string values in Pandas series df and replace with nan"""
         new_df = df.astype(str)
+        new_df = new_df.str.strip()
         new_df = new_df.replace({'N/A': np.nan, 'NULL': np.nan, '^(?=.*[A-Z])(?=.*[0-9])[A-Z0-9]*$': np.nan}, regex=True)
         return new_df
     
@@ -146,7 +156,13 @@ class DataCleaning:
             if header.startswith('date_') or header.endswith('_date'):
                 clean_df[header] = pd.to_datetime(clean_df[header], format=format, errors='coerce')
         return clean_df
-
+    
+    def _filter_uuids(self, df):
+        """Take Pandas series as input and replace all non-uuids with nan; return series"""
+        uuid_pattern = r'[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}'
+        mask = df.str.contains(uuid_pattern, regex=True)
+        return df.where(mask, np.nan)
+    
     
     def _generic_clean(self, df):
         """Get rid of duplicates, index columns and null rows and columns"""

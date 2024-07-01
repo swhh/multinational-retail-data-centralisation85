@@ -32,7 +32,7 @@ class DatabaseConnector:
     def upload_to_db(self, df, table_name):
         """take in a Pandas DataFrame and table name to upload to as an argument."""
         with self.engine.execution_options(isolation_level='AUTOCOMMIT').connect() as conn:
-            df.to_sql(table_name, self.engine, if_exists='replace')
+            df.to_sql(table_name, self.engine, if_exists='replace', index=False)
 
     
     
