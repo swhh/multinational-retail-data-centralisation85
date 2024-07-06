@@ -57,7 +57,7 @@ class DataExtractor:
         bucket_name = address_parts[-2]   
         try:
             s3 = boto3.client('s3')
-            obj = s3.get_object(Bucket=bucket_name, Key=file_name)
+            s3_object = s3.get_object(Bucket=bucket_name, Key=file_name)
         except NoCredentialsError:
             print("AWS credentials not found. Please configure your credentials.")
         except ClientError as e:
@@ -65,7 +65,7 @@ class DataExtractor:
                 print("The specified bucket does not exist.")
             else:
                 print("An error occurred:", e)
-        file = io.BytesIO(obj['Body'].read())
+        file = io.BytesIO(s3_object['Body'].read())
         if format == 'csv':
             return pd.read_csv(file)
         if format == 'json':
