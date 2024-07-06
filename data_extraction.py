@@ -16,19 +16,22 @@ STORE_DETAIL_URL = 'https://aqj7u5id95.execute-api.eu-west-1.amazonaws.com/prod/
 
 class DataExtractor:
 
-    def read_rds_table(self, db_conn, table_name):
+    @staticmethod
+    def read_rds_table(db_conn, table_name):
         """extract the database table to a pandas DataFrame."""
         with db_conn.engine.connect() as conn:
             df = pd.read_sql_table(table_name, con=conn)
         return df
     
-    def retrieve_pdf_data(self, pdf_path):
+    @staticmethod
+    def retrieve_pdf_data(pdf_path):
         """Takes a PDF link as an argument and returns a pandas DataFrame."""
         pdf_list = tabula.read_pdf(pdf_path, stream=True, pages='all')
         df = pd.concat(pdf_list, ignore_index=True)
         return df
     
-    def list_number_of_stores(self, end_point, header_dict):
+    @staticmethod
+    def list_number_of_stores(end_point, header_dict):
         """returns the number of stores to extract. 
         It should take in the number of stores endpoint and header dictionary as an argument."""
         response = requests.get(end_point, headers=header_dict)
@@ -46,9 +49,10 @@ class DataExtractor:
             stores.append(store_details)
         return pd.DataFrame(stores)
     
-    def extract_from_s3(self, s3_address, format='csv'):
+    @staticmethod
+    def extract_from_s3(s3_uri, format='csv'):
         """Uses the boto3 package to download and extract the information returning a pandas DataFrame.""" 
-        address_parts = s3_address.split('/')
+        address_parts = s3_uri.split('/')
         file_name = address_parts[-1]
         bucket_name = address_parts[-2]   
         try:

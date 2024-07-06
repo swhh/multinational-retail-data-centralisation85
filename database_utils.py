@@ -11,20 +11,23 @@ class DatabaseConnector:
         creds = self.read_db_creds(yaml_file)
         self.engine = self.init_db_engine(creds)
 
-    def read_db_creds(self, yaml_file):
+    @staticmethod
+    def read_db_creds(yaml_file):
         """Read dc_creds.yaml and return creds dictionary"""
         with open(yaml_file) as f:
             creds_dict = yaml.safe_load(f)
         return creds_dict
     
-    def init_db_engine(self, creds_dict):
+    @staticmethod
+    def init_db_engine(creds_dict):
         """read the credentials from read_db_creds 
         and initialise and return an sqlalchemy database engine"""
         engine_address = ENGINE_ADDRESS.format(**creds_dict)
         engine = create_engine(engine_address)
         return engine
     
-    def list_tables(self, engine):
+    @staticmethod
+    def list_tables(engine):
         """list all the tables in the database"""
         inspector = inspect(engine)
         return inspector.get_table_names()
