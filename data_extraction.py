@@ -65,6 +65,7 @@ class DataExtractor:
                 print("The specified bucket does not exist.")
             else:
                 print("An error occurred:", e)
+            return
         file = io.BytesIO(s3_object['Body'].read())
         if format == 'csv':
             return pd.read_csv(file)

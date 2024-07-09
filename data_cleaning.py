@@ -1,6 +1,7 @@
-import pandas as pd
 import math
 import numpy as np
+import pandas as pd
+
 
 CARD_PROVIDERS = ['Diners Club / Carte Blanche', 'American Express', 'JCB 16 digit',
        'JCB 15 digit', 'Maestro', 'Mastercard', 'Discover',
@@ -68,10 +69,8 @@ class DataCleaning:
         clean_df = df.copy()
         clean_df.card_number = self._clean_card_numbers(clean_df.card_number)
         # split out data contained in 'card_number expiry_date' column
-        card_numbers = clean_df.apply(self._split_wrapper('card_number'), axis=1) 
-        expiry_dates = clean_df.apply(self._split_wrapper('expiry_date'), axis=1)
-        clean_df['card_number'] = card_numbers
-        clean_df['expiry_date'] = expiry_dates
+        clean_df['card_number'] = clean_df.apply(self._split_wrapper('card_number'), axis=1) 
+        clean_df['expiry_date'] = clean_df.apply(self._split_wrapper('expiry_date'), axis=1)
         # drop duplicates/remove null values
         clean_df = self._generic_clean(clean_df)
         # clean dates
