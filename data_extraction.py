@@ -1,12 +1,13 @@
 import io
-import pandas as pd
-import tabula
 import requests
 import boto3
 from botocore.exceptions import NoCredentialsError, ClientError
+import pandas as pd
+import tabula
 from database_utils import DatabaseConnector
 from data_cleaning import DataCleaning
 from aws_creds import API_KEY
+
 CREDS = 'db_creds.yaml'
 PDF_PATH = 'https://data-handling-public.s3.eu-west-1.amazonaws.com/card_details.pdf'
 HEADER = {"Content-Type": "application/json",

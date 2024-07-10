@@ -1,6 +1,5 @@
-import yaml
 from sqlalchemy import create_engine, inspect
-
+import yaml
 
 
 ENGINE_ADDRESS = "{DATABASE_TYPE}+{DBAPI}://{USER}:{PASSWORD}@{HOST}:{PORT}/{DATABASE}"
