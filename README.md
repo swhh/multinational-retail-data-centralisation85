@@ -20,6 +20,7 @@ Key Python files are:
 2. Use the database connector class to connect to your local db
 3. Fetch data from the various AWS sources using the data extraction class
 4. Clean the data with the data cleaning class 
-5. Upload cleaned up classes to local database with connector class db upload method
-6. Run the sql queries in multinational_retail_queries to obtain the required sales insights
+5. Upload cleaned up data to local database with connector class db upload method
+6. Complete the star schema, adding primary keys and changing column data types in local db
+7. Run the sql queries in multinational_retail_queries to obtain the required sales insights
 
