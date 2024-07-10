@@ -71,9 +71,9 @@ class DataExtractor:
         if format == 'csv':
             return pd.read_csv(file)
         if format == 'json':
-            return pd.read_json
+            return pd.read_json(file)
         if format == 'html':
-            return pd.read_html
+            return pd.read_html(file)
 
 
         
