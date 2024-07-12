@@ -152,6 +152,7 @@ class DataCleaning:
     
     @staticmethod
     def _split_wrapper(column):
+        """Wrapper function that uses closure to produce a function that can help split the """
         def split_row(row):
             string = str(row['card_number expiry_date'])
             if string != np.nan:

@@ -4,8 +4,6 @@ import boto3
 from botocore.exceptions import NoCredentialsError, ClientError
 import pandas as pd
 import tabula
-from database_utils import DatabaseConnector
-from data_cleaning import DataCleaning
 from aws_creds import API_KEY
 
 CREDS = 'db_creds.yaml'
@@ -77,18 +75,7 @@ class DataExtractor:
 
 
         
-
-
 if __name__ == '__main__':
-    # rws_conn = DatabaseConnector(CREDS)
-    # extractor = DataExtractor() 
-    # df = extractor.read_rds_table(rws_conn, 'legacy_users')
-    # dc = DataCleaning()
-    # clean_df = dc.clean_user_data(df)
-    # sd_conn = DatabaseConnector('sales_data_db_creds.yaml')
-    # sd_conn.upload_to_db(clean_df, 'dim_users')
-    # print(clean_df.head())
-    # print(clean_df.info())
     extractor = DataExtractor()
     result = extractor.retrieve_pdf_data(PDF_PATH)
     print(result.head())
