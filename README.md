@@ -12,7 +12,7 @@ Key Python files are:
 - database utils: here we create a connection to dbs including local db that hosts and centralises all the multionational retail data
 - Data extraction: here we extract data from sources and convert it to Pandas dataframes
 - Data cleaning: here we clean the dataframes provided by data extraction and prepare them for upload to the local Postgres db
-- Multinational retail queries: contains the SQL queries to fetch data from the star-schema Postgres database filled with data cleaned with the data cleaning file and uploaded via the data connector in the databsase utils file
+- Multinational retail queries: contains the SQL queries to fetch data from the star-schema Postgres database filled with data cleaned with the data cleaning file and uploaded via the data connector in the database utils file
 
 ## Usage Instructions
 
